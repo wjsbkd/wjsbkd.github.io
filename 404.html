@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#020202" />
+    <title>页面不存在 · 李纵横</title>
+    <style>
+      /* 独立页面拿不到 global.css，颜色按令牌名手抄一份（改主站色时同步这里）：
+         void-7 #020202 / text-bright #f5f3ff / text-dim #8f8b8e /
+         rim-brick #8a5055 / rim-ember #daa7a1 / paper #fefefe / ink #1a1614 */
+      * { box-sizing: border-box; margin: 0; }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background: #020202;
+        color: #f5f3ff;
+        font-family: 'Noto Sans SC', 'PingFang SC', 'Segoe UI', Arial, sans-serif;
+        text-align: center;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+      }
+      /* 顶部缘光：与主站 .section-rim 同一道线 */
+      body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent 4%,
+          #63424b 22%,
+          #8a5055 42%,
+          #daa7a1 52%,
+          #8a5055 66%,
+          #63424b 84%,
+          transparent 96%
+        );
+        opacity: 0.75;
+      }
+      /* 缘光溢出的窄暖雾 */
+      body::after {
+        content: '';
+        position: absolute;
+        top: -90px;
+        left: 8%;
+        right: 8%;
+        height: 180px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at 50% 50%, rgba(138, 80, 85, 0.28), transparent 70%);
+        pointer-events: none;
+      }
+      .code {
+        position: relative;
+        font-size: clamp(72px, 12vw, 132px);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        color: #f5f3ff;
+      }
+      .code i {
+        font-style: normal;
+        color: #daa7a1; /* 最后一位数字吃缘光 */
+      }
+      h1 {
+        position: relative;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      p {
+        position: relative;
+        color: #8f8b8e;
+        font-size: 14px;
+        line-height: 1.7;
+      }
+      .meta {
+        position: relative;
+        font-family: 'DM Mono', ui-monospace, monospace;
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        color: #8a5055;
+      }
+      a {
+        position: relative;
+        margin-top: 18px;
+        display: inline-block;
+        background: #fefefe;
+        color: #1a1614;
+        padding: 14px 28px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+      a:hover { background: #ffffff; color: #8a5055; }
+    </style>
+  </head>
+  <body>
+    <p class="meta">LIZONGHENG / PORTFOLIO</p>
+    <div class="code">40<i>4</i></div>
+    <h1>这个页面走丢了</h1>
+    <p>你访问的链接可能已移动或不存在。</p>
+    <a href="/">返回首页</a>
+  </body>
+</html>

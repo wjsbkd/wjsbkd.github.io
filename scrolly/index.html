@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>滚动看一条片子 · 作品集</title>
+<meta name="description" content="一条 15 秒的短片，从发呆到收工。向下滚动，你就是这条片子的进度条。">
+<meta name="theme-color" content="#020202">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" as="image" href="/assets/scrolly/outro-poster.jpg">
+<!-- 原先这里有一行 <link rel="preload" as="video" href="/assets/scrolly/main.mp4" crossorigin>，
+     2026-10-26 删掉：preload 是**无条件**下整份，与下面 v-main 的 preload="metadata"
+     直接矛盾（一个非要下、一个说别下），实际把 metadata 省下的量全部抵消。
+     intro.mp4 不预加载：它是 <video autoplay> 自己会发起请求的那一个，
+     且首屏 poster 走的是 index.html 那条 preload 的同源策略，重复预加载只会打架。
+     想要 main.mp4 早点到位，正确做法不是 preload，而是等 intro 交棒后再补一个
+     video.preload='auto'（见 scrolly.js 的 stage 切换处）——需要时再加。 -->
+<!-- 字体：与主站同一条理由（主站注释在 index.html 里，2026-10-17 起改成非阻塞加载）——
+     外链样式表是渲染阻塞的，直接 <link rel="stylesheet"> 会让首屏等 fonts.googleapis.cn；
+     这里改成 preload + media="print" onload 换回 all，首屏不等它，字体到了再换字（display=swap）。
+     字重按本页 scrolly.css 的 font-weight 实测清单收窄：
+     Archivo 只用 300/500/600/800 与 italic 800（400/700/900 与 italic 600 本页 0 引用）。
+     这一页与主站不同：它**引 Noto Sans SC**（本页汉字标题使用），不要照搬主站那条「只砍 Noto」。 -->
+<link rel="preconnect" href="https://fonts.googleapis.cn" />
+<link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin />
+<link
+  rel="preload"
+  as="style"
+  href="https://fonts.googleapis.cn/css2?family=Archivo:ital,wght@0,300;0,500;0,600;0,800;1,800&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap"
+/>
+<link
+  rel="stylesheet"
+  media="print"
+  onload="this.media='all'"
+  href="https://fonts.googleapis.cn/css2?family=Archivo:ital,wght@0,300;0,500;0,600;0,800;1,800&family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap"
+/>
+<!-- 分享卡 / 规范链接：这一页是站内独立 URL（Media.jsx:71 挂着入口），
+     会被单独分享与收录，缺 og 时微信/微博拿不到封面、Twitter/LinkedIn 要求绝对 URL。
+     封面沿用主站那张 og-cover（同源语言），不另做一张。 -->
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:site_name" content="李纵横 · 个人作品集" />
+<meta property="og:title" content="滚动看一条片子 · 李纵横作品集" />
+<meta property="og:description" content="一条 15 秒的短片，从发呆到收工。向下滚动，你就是这条片子的进度条。" />
+<meta
+  property="og:image"
+  content="https://wjsbkd.github.io/assets/og-cover.jpg"
+/>
+<meta property="og:url" content="https://wjsbkd.github.io/scrolly/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta
+  name="twitter:image"
+  content="https://wjsbkd.github.io/assets/og-cover.jpg"
+/>
+<link rel="canonical" href="https://wjsbkd.github.io/scrolly/" />
+<link rel="stylesheet" href="scrolly.css" />
+</head>
+<body>
+
+<!-- 背景舞台：三层同时渲染，只靠 opacity 切换 -->
+<div class="stage" aria-hidden="true">
+  <div class="layer is-on" id="layer-intro">
+    <video id="v-intro" class="film film--parallax" muted loop autoplay playsinline preload="auto"
+           src="/assets/scrolly/intro.mp4"></video>
+  </div>
+  <div class="layer" id="layer-main">
+    <!-- preload="metadata" 与主站 FilmStage.jsx:558 同一条理由（那边有完整实测）：
+         auto 会在用户一次滚动都没有时把整份 main.mp4 拉完，metadata 让 Chrome 缓冲够了
+         就掐掉请求，主站实测省 6.37–6.53 MB（−81.5%～−83.6%）、交棒与首帧代价为零。
+         本页用法与主站一致：scrolly.js 只要 main.duration（loadedmetadata）然后逐帧 seek，
+         所以 metadata 拿得到 duration，seek 门照开。视频压缩后绝对值降到 3.5 MB，
+         省下的量同比缩小，但「用户没滚动就不该下整份」这条不变。
+         intro 保持 auto：它是首屏，用户进来就要看。 -->
+    <video id="v-main" class="film" muted playsinline preload="metadata"
+           src="/assets/scrolly/main.mp4"></video>
+  </div>
+  <div class="layer" id="layer-outro">
+    <img id="poster-outro" class="film" alt="" src="/assets/scrolly/outro-poster.jpg">
+  </div>
+  <div class="scrim scrim--sky"></div>
+  <div class="scrim scrim--floor"></div>
+</div>
+
+<!-- 顶栏：悬浮药丸，与主站同一套语言（字标沿用 Nav / Footer 那枚 LZH 锁定） -->
+<header class="hud-top">
+  <a class="pill pill--mark" href="/" aria-label="返回作品集首页">
+    <svg class="wordmark" viewBox="0 0 120 48" aria-label="LZH">
+      <text class="bm-lzh" x="0" y="38">L</text>
+      <text class="bm-lzh" x="40" y="38">Z</text>
+      <text class="bm-h" x="78" y="38">H</text>
+    </svg>
+  </a>
+  <nav class="pill pill--nav" aria-label="章节">
+    <span class="nav-item is-on" data-jump="0">首屏</span>
+    <span class="nav-item" data-jump="0.16">乱想</span>
+    <span class="nav-item" data-jump="0.58">过载</span>
+    <span class="nav-item" data-jump="0.84">落地</span>
+    <span class="nav-item" data-jump="1">尾声</span>
+  </nav>
+  <a class="pill pill--cta" href="/">进入作品集</a>
+</header>
+
+<main>
+  <!-- 文案层：固定居中，靠 fade 交接 -->
+  <div class="captions">
+
+    <section class="caption is-on" id="cap-intro" data-stage="intro">
+      <p class="badge"><b>李纵横</b> 内容 / 运营 · 作品集</p>
+      <h1 class="headline">
+        <span class="line">把脑子里的热闹</span>
+        <span class="line">做成看得见的东西</span>
+      </h1>
+      <p class="sub">一条 15 秒的短片，从发呆到收工。<br>向下滚动，你就是这条片子的进度条。</p>
+      <p class="btn-row"><a class="btn" href="#" data-jump="0.06">开始滚动</a></p>
+      <div class="metrics">
+        <div><b class="m-val">15s</b><span class="m-key">主视频时长</span></div>
+        <div><b class="m-val">03</b><span class="m-key">叙事节拍</span></div>
+        <div><b class="m-val">24</b><span class="m-key">帧每秒</span></div>
+        <div><b class="m-val">100%</b><span class="m-key">滚动驱动</span></div>
+      </div>
+    </section>
+
+    <section class="caption" id="cap-1" data-stage="1">
+      <p class="kicker"><span>01</span>STATIC NOISE</p>
+      <h2 class="headline headline--act">
+        <span class="line">灵感先在脸上</span>
+        <span class="line">乱涂一遍</span>
+      </h2>
+      <p class="sub">脸上贴满草稿的那几分钟，是所有作品的起点。<br>没有一张图是干净的，就像没有念头是安静的。</p>
+      <p class="meta">00:00.0 &mdash; 00:06.8 &nbsp;/&nbsp; 特写 &nbsp;/&nbsp; 发呆 &rarr; 托腮 &rarr; 瞪眼</p>
+    </section>
+
+    <section class="caption" id="cap-2" data-stage="2">
+      <p class="kicker"><span>02</span>OVERWHELM</p>
+      <h2 class="headline headline--act">
+        <span class="line">坐下来认真做</span>
+        <span class="line">却被念头抛上半空</span>
+      </h2>
+      <p class="sub">工具、需求、参考图同时起飞，咖啡泼了一脸。<br>这一段我最想留给你看：失控也是过程的一部分。</p>
+      <p class="meta">00:06.8 &mdash; 00:11.6 &nbsp;/&nbsp; 中景 &rarr; 全景 &nbsp;/&nbsp; 开工 &rarr; 腾空</p>
+    </section>
+
+    <section class="caption" id="cap-3" data-stage="3">
+      <p class="kicker"><span>03</span>LANDED</p>
+      <h2 class="headline headline--act">
+        <span class="line">摔在地上也</span>
+        <span class="line">先把咖啡端稳</span>
+      </h2>
+      <p class="sub">把失控收回来，交付一个能用的东西——<br>这就是我做设计的全部，也是我想跟你继续聊的。</p>
+      <p class="meta">00:11.6 &mdash; 00:15.1 &nbsp;/&nbsp; 落地 &rarr; 起身 &rarr; 走向镜头</p>
+    </section>
+
+    <section class="caption" id="cap-outro" data-stage="outro">
+      <p class="kicker"><span>04</span>NEXT</p>
+      <h2 class="headline headline--act">
+        <span class="line">人看完了</span>
+        <span class="line">接下来看作品</span>
+      </h2>
+      <p class="sub">项目、经历、账号运营都在主站里。<br>这条片子往回滚，可以倒着放完。</p>
+      <p class="btn-row">
+        <a class="btn" href="/">进入作品集</a>
+        <a class="btn btn--ghost" href="#" data-jump="0">回看一遍</a>
+      </p>
+    </section>
+
+  </div>
+
+  <!-- 滚动轨道：只负责撑高度，不承载内容 -->
+  <div id="track" class="track"></div>
+</main>
+
+<footer class="hud-bottom" aria-hidden="true">
+  <span class="cue" id="cue">SCROLL</span>
+  <span class="bar"><span class="bar-fill" id="bar-fill"></span></span>
+  <span class="readout" id="readout">00:00.0 / 00:15.1</span>
+</footer>
+
+<noscript><p class="noscript">这条页面需要 JavaScript 才能用滚动驱动视频。</p></noscript>
+<script src="scrolly.js"></script>
+</body>
+</html>

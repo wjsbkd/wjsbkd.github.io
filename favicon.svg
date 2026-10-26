@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 与站内字标同一套配色（值抄自 global.css 的 void-1 / text-bright / rim-ember，
+       SVG 属性里写 var() 不可靠）：缘光只落在最后一笔 H 上。
+       三个字母走一个 text 加 tspan 换色：分开写 text 就得手算每个字的推进宽度。
+       注意 XML 注释里不能出现连续两个减号，所以令牌名不带前缀。 -->
+  <rect width="64" height="64" rx="14" fill="#0b0706" />
+  <text
+    x="32"
+    y="42"
+    text-anchor="middle"
+    font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+    font-weight="800"
+    font-style="italic"
+    font-size="27"
+    letter-spacing="-1"
+  >
+    <tspan fill="#f5f3ff">LZ</tspan><tspan fill="#daa7a1">H</tspan>
+  </text>
+</svg>

@@ -1,0 +1,1 @@
+import{d as e,g as t,y as n}from"./dist-BPOi4vSH.js";import{pn as r}from"./draftUtils-Ciaf0oQQ-KJBPMr7H.js";var i=e(),a=n(t(),1);function o(){let e=(0,i.c)(1),t=(0,a.useContext)(r);if(!t){let t;return e[0]===Symbol.for(`react.memo_cache_sentinel`)?(t={activeDocument:null,setActiveDocument:s,data:[],isLoading:!1},e[0]=t):t=e[0],t}return t}function s(){return null}export{o as t};

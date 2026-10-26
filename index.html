@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- theme-color 与页面最深档 --void-7 同值：手机浏览器的地址栏色应当是
+         页面尽头的那个黑，不是改造前的暖炭 #0d0a0c -->
+    <meta name="theme-color" content="#020202" />
+    <style>html{--lightningcss-light: ;--lightningcss-dark:initial;color-scheme:dark;background:#020202}</style>
+
+    <!-- 首屏那张定妆照必须在这里就挂上：poster 是 React 挂载之后才写进 <video> 的，
+         实测冷启动时它的请求要到 5.3s 才发出（页面 0.7–5s 才 FCP，取决于 CDN 那一枪多快），
+         也就是「黑」的时长 ≈ 文档延迟 + poster 自己的 3.1s。preload 把它提到解析器扫到
+         就发（≈0.26s），和 JS 并行，画面才可能赶在用户还没往下滚之前出现。 -->
+    <link rel="preload" as="image" href="/assets/scrolly/intro-front.jpg" fetchpriority="high" />
+
+    <!-- 字体：preconnect 提前握手 + 非阻塞加载这张字体 CSS。
+         为什么不能直接 <link rel="stylesheet">：外链样式表是渲染阻塞的，而 deferred 的
+         module script 要等未完成的样式表 —— 实测这条链是「字体 CDN 慢 → React 不挂载 →
+         首屏只剩 #020202 的黑」。本机对 fonts.googleapis.cn 的 DNS 双峰（5.9s～11.8s 都出现过）。
+         同一个包只换这段 HTML，冷启动三轮 FCP：阻塞版 1.6s / 7.7s / 12.3s，
+         这一版 152 / 172 / 184 ms —— 而同一轮里字体 CSS 自己仍要 6.2s / 12.0s / 11.8s 才到，
+         差别就在于首屏不再等它。代价是先出系统字、CSS 到位后换字（URL 里本来就有 display=swap）。
+         字重清单按全站实测：900 与 italic 600 确实 0 引用。400 这一档要说准（sc69 普查，1470 宽，
+         跑的是 dist-deploy 这份包）：算到 font-weight:400 的叶子 46 个，其中 2 个是 <style>/<title>、
+         11 个零尺寸，剩下含拉丁又可见的只有 15 段 —— 由 --font-display（栈里打头是 Archivo）画的是
+         12 段（#about 3、#strengths 2、#experience 1、#media 6，字号 15px / 12px），另外 3 段跟
+         Archivo 无关：2 段 --font-mono（DM Mono 的 400 本来就在清单里），1 段 --font-sans
+         （#media 的一条 li，getPlatformFontsForNode 报 Noto Sans SC 把它的汉字和拉丁一起画了 ——
+         这台机器装着 Noto Sans SC，不是「站点不下发就用不上」；访客机器没装才往 PingFang / Segoe UI
+         掉，这一句是推断）。纯汉字的 29 段也不归 Archivo 画：同一把尺报的是分工，例如 #about 那句
+         「Noto Sans SC×60 + Archivo SemiBold×5」，汉字那 60 个字形来自系统里那份 Noto。
+         删掉 400 的实测后果只压在这 12 段的拉丁上：由 500 那一支画（15px 下同一串拉丁量宽 250.36px，
+         与直接请求 500 完全相等；有真 400 时是 247.48px，窄 1.15%），整段实宽平均窄 0.32%、
+         最大 1.00%。⚠️ getPlatformFontsForNode 回的族名是「Archivo SemiBold」，别看字面以为在画 600 ——
+         400 与 500 指向同一个可变字体文件，CSS 把范围钉成 500，族名是文件自带的默认实例名（推断），
+         宽度证据（实测）指的是 500。
+         加回 400 的代价已量：字体文件 0 字节增量（400 与 500 是同一支可变字体，URL 相同，
+         实测 latin 子集 34,928 B 本来就在下发），只有字体 CSS 多 567 B。
+         ✅ **2026-10-17 深夜定论：加回。** 代价仅 567 B 的 CSS，收益是全站正文默认字重回真 400
+         （源码里没有一处显式 font-weight:400，那 12 段吃的是 body 继承的默认值，原本被 500 顶替）；
+         删 400 那个决定的收益只有 567 B，与风险不成比例。下面 URL 已含 `0,400`（preload 与
+         stylesheet 两处一致）；scrolly 那份同样加回。
+         改字体族或字重时改下面这一行（两处：preload 与 stylesheet，必须一致），
+         别在 global.css 里加回 @import（那边有同主题注释）；
+         public/scrolly/index.html 是另一份清单，别照抄主站这条。 -->
+    <link rel="preconnect" href="https://fonts.googleapis.cn" />
+    <link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.cn/css2?family=DM+Mono:wght@400;500&family=Archivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://fonts.googleapis.cn/css2?family=DM+Mono:wght@400;500&family=Archivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,800&display=swap"
+    />
+
+    <!-- 基础 SEO -->
+    <title>李纵横 · 个人作品集 | AI 内容运营与视觉创作者</title>
+    <meta
+      name="description"
+      content="李纵横的个人作品集：专注内容、运营与现场执行的交界处，让创意转化为可见的影响力。涵盖虎扑 CSGO 上海 Major、WaytoAGI 少儿 AI 春晚、弥勒春晚、芒果TV《大侦探》等项目。"
+    />
+    <meta name="author" content="李纵横" />
+    <meta name="keywords" content="李纵横,作品集,内容运营,AI内容,视觉创作,短视频,活动策划,个人主页" />
+    <link rel="canonical" href="https://wjsbkd.github.io/" />
+
+    <!-- Open Graph（微信 / 朋友圈 / 社交媒体分享卡片） -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content="李纵横 · 个人作品集" />
+    <meta property="og:title" content="李纵横 · 个人作品集 | AI 内容运营与视觉创作者" />
+    <meta
+      property="og:description"
+      content="专注内容、运营与现场执行的交界处，让创意转化为可见的影响力。"
+    />
+    <!-- 分享封面：`public/assets/og-cover.jpg`（1200×630，与首屏同一套白板语言）。
+         写成绝对 URL：微信/QQ/微博的爬虫会拿页面 origin 补全根相对路径，
+         但 Twitter / Slack / LinkedIn 的爬虫要求绝对 URL，根相对的抓不到图。
+         换域名时，这一行和 canonical / og:url、public/robots.txt 的 Sitemap 行、
+         public/sitemap.xml 的 <loc> 一起换（共六处），不同步会被搜索引擎当成两个站点。 -->
+    <meta property="og:image" content="https://wjsbkd.github.io/assets/og-cover.jpg" />
+    <meta property="og:url" content="https://wjsbkd.github.io/" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="李纵横 · 个人作品集 | AI 内容运营与视觉创作者" />
+    <meta
+      name="twitter:description"
+      content="专注内容、运营与现场执行的交界处，让创意转化为可见的影响力。"
+    />
+    <meta name="twitter:image" content="https://wjsbkd.github.io/assets/og-cover.jpg" />
+
+    <!-- favicon（本地 SVG，避免外链失效） -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- apple-touch-icon 必须位图：iOS「添加到主屏幕」不解析 SVG，
+         没有它就是整页实时截图当图标（求职方用 iPhone 收藏链接时会看到）。
+         由 public/favicon.svg 同一份构图渲染而来（值抄 global.css 的 void-1 /
+         text-bright / rim-ember），改字标时两边同步。 -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script type="module" crossorigin src="/assets/main--JeTUvgL.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/dist-BPOi4vSH.js">
+    <link rel="modulepreload" crossorigin href="/assets/client-BcyJImHZ.js">
+    <link rel="stylesheet" crossorigin href="/assets/main-DHcmwRfX.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

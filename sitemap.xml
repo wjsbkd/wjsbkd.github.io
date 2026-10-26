@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://wjsbkd.github.io/</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <!-- scrolly 独立页：站内 Media 板块挂着 /scrolly/ 入口（Media.jsx 的 portfolio-bar），
+       它是可被单独访问、单独分享的 URL，缺这一条等于页面在搜索引擎眼里不存在。
+       用 /scrolly/ 不带 index.html：GitHub Pages 与 Cloudflare Pages 都能直接服，
+       而 Cloudflare 会把 /scrolly/index.html 308 到 /scrolly/（多一跳）。
+       Vite dev 的 SPA fallback 会把 /scrolly/ 回落成首页 —— 那是本地开发的事，
+       两个托管平台都不fallback，线上不受影响。 -->
+  <url>
+    <loc>https://wjsbkd.github.io/scrolly/</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>

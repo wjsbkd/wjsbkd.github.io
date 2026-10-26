@@ -1,0 +1,1 @@
+import{g as e,y as t}from"./dist-BPOi4vSH.js";import{N as n}from"./draftUtils-Ciaf0oQQ-KJBPMr7H.js";var r=t(e(),1);function i(){let e=(0,r.useContext)(n);if(!e)throw Error(`useComments must be used within a CommentsProvider`);return e}export{i as t};

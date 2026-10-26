@@ -1,0 +1,1 @@
+import"./lib-BXNJLVNH.js";import{i as e}from"./helpers-BppHcOuY-CEIzwVLj.js";var t=e({"invalid-video-warning.description":`此字段的值不是有效的视频。重置此字段将允许您选择新视频。`,"invalid-video-warning.reset-button.text":`重置值`,"invalid-video-warning.title":`无效的视频值`,"video-error.description":`视频加载失败`,"video-error.retry-button.text":`重试`});export{t as default};

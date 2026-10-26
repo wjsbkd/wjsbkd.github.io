@@ -1,0 +1,561 @@
+/* ============================================================
+   scrollytelling 页面样式
+   视觉语言与主站同源：2026-10-11 第四轮迁移到参考图「黑场 + 火光 + 白墨」海报排版。
+   token 抄自 src/styles/global.css 的实测值，改色时两边都要对。
+
+   本轮退役（与主站同步）：--sky-* 天光、--rim-rose/--rim-peak 玫瑰阶、
+   Silkscreen 与 Fusion Pixel 两套像素字、点阵遮罩 .dot-matrix、天光带上的数字雨。
+   参考图的装饰只有三样：白药丸、大写微标签、发丝分割线 —— 这一页也只用这三样。
+
+   ⚠️ 构图轴在 2026-10-13 从「居中」改成「下缘 + 左对齐」：他指着这一页说「背景画面被文字挡住」。
+   原先保留居中的理由是「主体在画面中央来回移动，居中才压得住」—— 量下来结论相反：
+   主体在横轴上确实来回移动（特写帧脸占 x 412–1108，办公帧人占 x 860–1384），
+   但纵轴上脸的底缘十帧全部 ≥ y 500，而底部 HUD 顶缘实测 y=866 —— 能稳定让开人物的只有纵向。
+   所以文字整块沉到下三分之一、左对齐贴主站版心，横轴不再抢人物那条中线。
+   排版轴（字体 / 字重 / 字号比例 / 颜色 / 装饰）仍是参考图那一套，没动。
+
+   ⚠️ 2026-10-14 第二轮：他指着过载段说「左上方太空了，下方的黑色晕影可以去除掉吗（第二张图就是因此看不清的）」。
+   晕影是两层（整页 .scrim--floor + 贴文字的 .caption::before），量下来旧 floor 遮罩把画面底部 20%
+   的相对亮度从 0.110/0.117 压到 0.0095/0.0059 —— 吃掉 11~20 倍，那几张飞出来的 app 图标就是这么没的。
+   桌面这两层现在都撤了（floor 只留底部一条给 HUD 兜底），空白改由「段首微标签钉到顶缘」来填，
+   不新增任何文案。代价是衬底没了、字要自己站住，于是逐件提墨 + 加描边光晕，两套口径实测见 .headline 处注释。
+   ≤640 例外：竖屏是 cover 裁切，人物顶天立地没有余量可让，床罩只在手机档保留。
+   ============================================================ */
+
+:root {
+  /* 火光阶（实测参考图暖部：均值 #A4430B、最亮 #FFC489）
+     ⚠️ 深色档只用于描边、发光、填充，不能当文字色。 */
+  --rim-flare: #ffc489;
+  --rim-ember: #d96a12;
+  --rim-brick: #bb4d05;
+  --rim-wine: #6b1e04;
+  --rim-brick-a18: rgba(187, 77, 5, 0.18);
+  --rim-brick-a28: rgba(187, 77, 5, 0.28);
+  --rim-ember-a40: rgba(217, 106, 18, 0.4);
+
+  /* 下潜档位（本页只有最深一档：背景是影片，UI 全部浮在上面） */
+  --void-7: #020202;
+
+  /* UI 反转件（实测：白药丸 #fefefe / 墨 #1a1614） */
+  --paper: #fefefe;
+  --paper-hi: #ffffff;
+  --ink: #1a1614;
+
+  /* 文字色阶：参考图全部文字实测都是 #FFFFFF，层级由字号与大写承担。
+     这里保留三档白墨，因为背景是会亮的影片；0.66 是按 4.5:1 反推的下限。 */
+  --text-bright: #ffffff;
+  --text-base: rgba(255, 255, 255, 0.88);
+  --text-dim: rgba(255, 255, 255, 0.66);
+  --text-bright-a06: rgba(255, 255, 255, 0.06);
+  --text-bright-a10: rgba(255, 255, 255, 0.1);
+  --text-bright-a16: rgba(255, 255, 255, 0.16);
+
+  /* 强调：取火光最亮档，只允许出现在 ≤--fs-label 的拉丁/数字微标签与瞬时状态上 */
+  --accent: #ffc489;
+  --accent-active: #f08a2a;
+
+  /* 分割线 */
+  --line: rgba(255, 255, 255, 0.1);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --scrim: rgba(2, 2, 2, 0.72);
+
+  /* 字体栈：Archivo 扛拉丁显示体，汉字自动落到 Noto Sans SC 的同档字重 */
+  --font-display: 'Archivo', 'Noto Sans SC', -apple-system, 'PingFang SC', 'Segoe UI', Arial,
+    sans-serif;
+  --font-sans: 'Noto Sans SC', -apple-system, 'PingFang SC', 'Segoe UI', Arial, sans-serif;
+
+  /* 字号阶：正文 15 / 微标签 12 / 读数 10，与主站同档 */
+  --fs-h3: clamp(19px, 1.5vw, 27px);
+  --fs-body: 15px;
+  --fs-label: 12px;
+  --fs-micro: 10px;
+  --lh-display: 0.92;
+  --lh-body: 1.6;
+  --track-display: -0.015em;
+  --track-label: 0.16em;
+
+  --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-claude: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --fade: 0.5s;
+
+  /* 滚动轨道长度 = 主视频秒数，由 JS 用真实 duration 覆写 */
+  --screens: 15.08;
+
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { background: var(--void-7); }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text-base);
+  background: var(--void-7);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── 舞台：三层同时渲染 ───────────────────────────────────── */
+.stage { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: var(--void-7); }
+
+.layer {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity var(--fade) var(--ease-apple);
+}
+.layer.is-on { opacity: 1; }
+
+.film {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  /* 与主站 FilmStage 同一份暖调分级：参考图的橙色 100% 来自画面，
+     所以这里的"火光"也全部由素材提供，UI 不再另外染色。 */
+  filter: sepia(0.38) hue-rotate(-6deg) saturate(1.3) brightness(0.74);
+}
+/* 视差位移由 JS 每帧 lerp 写入，这里不能再挂 transition——两套时钟会互相拉扯。
+   scale 给位移留出余量，平移时不会露出画面外的黑边。 */
+.film--parallax { transform: scale(1.08); }
+
+/* 顶栏那道黑保留；底部这道在 2026-10-14 砍到只剩贴着 HUD 的一条边。
+   原来那版（transparent 46% → .62@76% → --void-7@100%）把下半幅整体压成黑：
+   sc9@1470×706（他真实视口）在 t=9.4 / t=10.3 逐带量过，影片本来的亮度 80–90% 带 0.1095 / 0.1135、
+   90–100% 带 0.1188 / 0.1412，叠上这道 scrim 后是 0.0038 / 0.0038 和 0.0061 / 0.0065 —— 吃掉 20~30 倍，
+   也就是他说的「下方的黑色晕影」，第二张截图里那几块飞起来的 App 图标（Claude / CAD / Ae）就是这么被抹掉的。
+   现在只留底部 14%（86% 起判）那一条给 HUD 读数兜底，画面本体还给影片。
+
+   ✅ 2026-10-14 第五十一次复量确认（sc15/sc16，每档三时刻各截 新/旧/无 floor 三张，均无字）：
+   底部 20% 整体「新 floor 剩多少」= 62.4%~79.4%（旧 floor 只剩 2.7%~5.6%）；
+   逐带看更直白：1470×900 act2 的 80–85% 带，新 floor 与**无 floor 完全相同**（0.12835 vs 0.12835，比值 1.000）
+   —— 新 floor 在这一带完全透明，**一个字节都没遮**，这就是「去掉晕影」的直接证据。
+   旧 floor 同带只有 0.01294（10.1%），95–100% 带更只剩 1.7~2.4%（吃掉 42~59 倍）。
+   375×812 act3/outro 的「新剩 35.8%」偏低但**不是晕影**：那两帧画面本身下半幅就暗
+   （无 floor 也只有 0.15584），对照 act2 帧（无 floor 0.13780、新剩 79.4%）可确认。 */
+.scrim { position: absolute; inset: 0; pointer-events: none; }
+.scrim--sky {
+  background: linear-gradient(to bottom, rgba(2, 2, 2, 0.55) 0%, rgba(2, 2, 2, 0.18) 9%, transparent 22%);
+}
+.scrim--floor {
+  background: linear-gradient(to bottom, transparent 86%, rgba(4, 3, 3, 0.3) 95%, rgba(4, 3, 3, 0.62) 100%);
+}
+
+/* ── 顶栏 HUD ─────────────────────────────────────────────── */
+.hud-top {
+  position: fixed; z-index: 30; top: 18px; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 0 max(14px, env(safe-area-inset-left)) 0 max(14px, env(safe-area-inset-right));
+  pointer-events: none;
+}
+.pill {
+  pointer-events: auto;
+  display: inline-flex; align-items: center; gap: 8px;
+  border-radius: 999px; text-decoration: none;
+  font-family: var(--font-display);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+.pill--mark {
+  width: 40px; height: 40px; justify-content: center;
+  background: var(--paper); color: var(--ink);
+}
+/* 字标与主站 Nav / Footer 同一枚锁定：Archivo 800 斜体，尾字母 H 取缘光色 */
+.wordmark {
+  display: block; width: auto; height: 17px;
+  font-family: var(--font-display);
+  font-size: 42px; font-weight: 800; font-style: italic;
+  letter-spacing: -2px;
+}
+.wordmark .bm-lzh { fill: var(--ink); }
+.wordmark .bm-h { fill: var(--rim-brick); }
+.pill--nav {
+  background: var(--paper); color: var(--ink); padding: 13px 8px;
+  gap: 2px;
+}
+.nav-item {
+  padding: 6px 14px; border-radius: 999px; cursor: pointer;
+  position: relative;
+  font-weight: 500;
+  color: rgba(26, 22, 20, 0.62);
+  transition: color 0.25s ease;
+}
+.nav-item:hover { color: var(--ink); }
+.nav-item.is-on { color: var(--ink); font-weight: 800; }
+/* active 用发丝线，不用第三轮那排 LED 点 */
+.nav-item.is-on::after {
+  content: ''; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 1px;
+  background: var(--ink);
+}
+.pill--cta {
+  background: var(--paper-hi); color: var(--ink);
+  padding: 13px 20px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  transition: translate 0.25s var(--ease-claude), background 0.25s ease;
+}
+.pill--cta:hover { background: var(--paper); translate: 0 -2px; }
+
+/* ── 文案层 ───────────────────────────────────────────────── */
+/* 桌面：**首行微标签钉左上，其余沉到下三分之一**，两头像画框的四角一样把中间让给影片。
+   依据是 sc4 那轮量到的脸部包围盒（1470×900，肤色掩膜 + 2~98 分位，框画回原图自检过）：
+   十帧里脸的底缘（下巴）最低到 y≈500，而底部 HUD 顶缘实测 y=866 —— 中间这条 y 500–850 的带子
+   在五个段落里都是空的；反过来左右两条竖栏都不空（特写那几帧脸占 x 412–1108，
+   办公那两帧人占 x 860–1384）。所以能避让的轴只有纵向。
+   左上那一格是 2026-10-14 补的：他把这一页截了两张发来，问「画面左上方太空了」——
+   整块沉底之后 y 60–470 全空。填它的不是新文案（不许编），是本来就在段首的那行微标签：
+   首屏的 `[ 李纵横 内容 / 运营 · 作品集 ]`、三幕的 `02 // OVERWHELM`。
+   机制是 `.captions` 从 end 改成 stretch（文案盒撑满整屏高）+ 首行 `margin-bottom:auto`，
+   余下的空间全被那条 auto margin 吃掉，块体本身的位置和尺寸一行没动。
+   左边界沿用主站版心的那条算法（global.css:424 padding-inline: max(60px, (100% - 1700px)/2)），
+   宽屏时文字不会孤零零贴在屏幕最左。
+
+   ✅ 2026-10-14 第五十一次复量（sc10，首屏帧、段首微标签那一带、左 62% 宽的 fg/bg 差）：
+   1470×900 微标签顶 y=96、墨像素 2033、最大 Δ197、均 Δ15.55；
+   1688×811 y=96、墨像素 2859、最大 Δ199；1470×700 y=96、墨像素 1342、最大 Δ198 —— 三档都钉在 y=96，
+   正是他截图里「左上方太空」的那一格，现在有字。
+   ⚠️ 375×812 是另一套机制（≤900px 回 place-items:end center，整块居中压在脸下方），
+   微标签落在 y=461，**不是**左上；那一档填左上靠的是暗垫（见下面 ≤640px 那段）。 */
+.captions {
+  position: fixed; inset: 0; z-index: 20;
+  display: grid; place-items: stretch start;
+  padding: 96px 24px 50px max(60px, calc((100vw - 1700px) / 2));
+  pointer-events: none;
+}
+.caption {
+  grid-area: 1 / 1;
+  position: relative; z-index: 0;
+  width: min(1080px, 100%);
+  display: flex; flex-direction: column; align-items: flex-start;
+  justify-content: flex-end;
+  text-align: left; gap: 0;
+  opacity: 0; visibility: hidden;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity var(--fade) var(--ease-apple),
+    transform 0.7s var(--ease-apple),
+    visibility 0s linear var(--fade);
+}
+/* 段首那一行被推到顶，其余留在底部 —— 只有撑满高度的那一档有余量可分，
+   ≤900px 那档回到 place-items:end，auto margin 分不到空间，等于自动失效。 */
+.caption > :first-child { margin-bottom: auto; }
+/* 文字盒上那层「往下往左铺」的暗垫整块删除（2026-10-14）。
+   它原来是给下压的 scrim 补刀的：sc9 量到 60–70% 带 0.0377→0.0349、70–80% 带 0.0223→0.0158，
+   叠在 scrim 之上又啃掉一截。垫子没了，字的可读性改由下面那组 text-shadow 承担 ——
+   阴影只跟着字形走，不再把整片画面糊掉。 */
+.caption.is-on {
+  opacity: 1; visibility: visible;
+  transform: none;
+  transition-delay: 0s, 0s, 0s;
+}
+/* 只有当前段可点，避免隐藏层的链接吃键盘焦点 */
+.caption:not(.is-on) a { pointer-events: none; }
+
+/* 垫子删掉之后，字的可读性改由这一组阴影承担：背景暗的地方它看不出来，背景亮的地方
+   它自动显形 —— 这正是整片压暗做不到的（压暗是恒定的，亮处和暗处一起黑）。
+   大字用宽半径低透明度的一圈柔光；小字（12px 那一档）额外叠一道 4px 的紧贴光晕，
+   半径一大字就糊，所以「贴笔形的暗」和「向外扩散的暗」分两笔写。
+   ⚠️ 这一组是 sc12 定的，不是凭手感：1470×900 最暗的一行（act3 副句，背景 L=0.1701）
+   按「阴影不计分」的严格口径 4.42:1，按「阴影算画面的一部分」的口径 5.99:1；
+   前者要再高只能靠暗垫，那正是他要拆的东西。
+
+   ⚠️⚠️ 量这一页的对比度，口径必须先钉死，否则会量出假数（2026-10-14 第五十一次返工三次才定案）：
+   sc10 首轮用「逐子元素盒内 fg/bg 对取、墨=比无字图亮 0.15+ 的像素 p95」，
+   在 375×812 上报出 8 行 <4.5，最低 2.97。追下去是**量法失真，不是缺陷**：
+     · 12px 小字在 375 宽上一盒只有 300~400 个墨像素，p95 会掉进抗锯齿的**边缘箱**
+       （alpha 0.15~0.35，inkL 实测 0.07~0.29）—— 那是半透明边缘，不是字。
+     · 按 alpha 分箱后：核心箱（alpha≥0.59）375 五段全部 5.11~5.98；
+     · 三图分离（同帧截 有字有垫 / 有字无垫 / 无字无垫）后：
+       375 档字的真实对比度（nopad vs nocaps）= 7.16:1，线上真实整块 6.27:1；
+       桌面三档五段 60 行逐子元素最低 5.19（1470×700 act3 sub）。
+   → 报这一页的数时**必须同时给核心箱那一档**，只给 p95 等于报边缘像素。
+   ⚠️ 另：CSS 注释里若见 `sc12@1470×706`，那个视口高度本轮没复现过（实测档是
+   1470×900 / 1688×811 / 1470×700 / 375×812），数字方向一致但别当已对拍。 */
+.headline, .m-val {
+  text-shadow: 0 0 28px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+.badge, .kicker, .sub, .meta, .m-key, .btn--ghost {
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.95), 0 0 13px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* 大字：无衬线实心 800，行距 .92，负字距 —— 参考图主标题的三件套。
+   点阵遮罩（.dot-matrix）随像素字一起退役。 */
+.headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: var(--lh-display);
+  letter-spacing: var(--track-display);
+  color: var(--text-bright);
+  display: flex; flex-direction: column; align-items: flex-start;
+}
+.headline .line { display: inline-block; }
+
+/* ⚠️ 字号跟**视口高**走，不跟宽：文字现在锁在 y 500–850 这条带子里，
+   带子的高度是视口高的比例，跟宽度无关。原来按 8.2vw 排，1470×900 是 118px，
+   两行就吃掉 217px —— 加上徽标/副句/按钮/数据栏，整块 600px 高，必然爬上脸。
+   现在首屏 7.2vh（900 高 = 64.8px）、三幕 6.6vh（59.4px），层级仍由大小承担。
+   sc7 实测（1470×900）：首屏整块 331 高、顶缘 y 519（同帧下巴 y=490）；
+   三幕 236 高、顶缘 614；尾声 259 高、顶缘 591（海报人物脸底缘换算到屏幕 y≈575）。 */
+#cap-intro .headline { --hero-fs: clamp(28px, 7.2vh, 84px); font-size: var(--hero-fs); margin-top: 10px; }
+.headline--act { --hero-fs: clamp(26px, 6.6vh, 78px); font-size: var(--hero-fs); margin-top: 10px; }
+
+/* 微标签：参考图的 `GMT+5 // LOCAL`、`[ SPEC-01 // DEEP HOUSE ]` 那一档 ——
+   同字号，靠大写 + 0.16em 字距与正文区分。
+   ⚠️ 浮在影片上的这一档一律纯白，不像主站那样用 --text-dim/.66：sc6 量到四段
+   kicker 行的真实背景 L = 0.026/0.033/0.037/0.044（由暗到亮），纯白实测 10.8~13.5:1；
+   按同背景合成 .66 档白墨推算只有约 5.9~6.9:1 —— 主站那套推导用的是静态底色（L=0.034），
+   这一页的背景会逐帧变化，不贴线。`//` 那枚标点仍留 --text-base。
+   ⚠️ 2026-10-14 起「浮在影片上只有一种白墨」这条扩到了副句/数据栏标签：暗垫撤了，
+   那两档 .88/.66 才补进纯白/.88，理由和实测数字写在各自那条规则里。
+   底部 HUD 的 `SCROLL` 提示仍留 --text-dim（它只在首屏出现，那一帧背景 L=0.036，实测 6.14:1）。 */
+.kicker {
+  margin: 0;
+  display: flex; align-items: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-bright);
+}
+.kicker span { color: var(--accent); }
+/* `//` 是这套语言的标点，挂在序号后面：01 // STATIC NOISE */
+.kicker span::after {
+  content: '//';
+  color: var(--text-base);
+  margin-left: 0.9em; margin-right: 0.9em;
+  letter-spacing: 0;
+}
+
+/* 首屏身份签：方括号微标签，替代第三轮那枚带描边和头像的胶囊。
+   墨用纯白而不是 --text-base：sc6 用「隐藏文案层再截一张」量到这一行的真实背景
+   L=0.060，两档都过（.88 档约 7.4:1，纯白 9.55:1），选纯白是为了和参考图那条
+   「浮在影片上只有一种白墨」的语言一致，并给逐帧亮暗留余量；层级由字号/字重/字距承担。 */
+.badge {
+  margin: 0;
+  display: inline-flex; align-items: center; gap: 0.55em;
+  font-family: var(--font-display);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-bright);
+}
+.badge::before, .badge::after { content: '['; opacity: 0.66; }
+.badge::after { content: ']'; }
+.badge b { color: var(--text-bright); font-weight: 800; }
+
+/* 副句：同一屏里的"轻"那一半 —— 参考图的 800 / 300 字重对撞，
+   层级由字重承担，颜色不参与。
+   ⚠️ 墨从 --text-base(.88) 提到纯白：这是撤掉暗垫的账，不是审美改动。
+   sc12@1470×706 逐行量（背景 = 整层文案 opacity:0 后同坐标取样，阴影不计分，严格下限）：
+   .88 档在 act3/outro 那两帧（背景 L=0.158/0.156，全页最亮的两处）只有 3.91 / 3.94:1，
+   19.8px/300 属于 WCAG 的「正文」档，线是 4.5 —— 不达标；提纯白后同一帧推算 5.06 / 5.09。
+   把字重和字号让给层级、颜色只留一档，也正是这一页从第四轮就写下的规矩。
+   纵向间距整体收紧（原来 26/20/34/46 是给"整块居中"留的呼吸，现在块要塞进下三分之一，
+   松一档就爬上脸）：现在副句 12、按钮行 14、数据栏 14+12，
+   首屏整块从 413 高压到 331 高，顶缘才从 417 落到 519。 */
+.sub {
+  margin: 12px 0 0;
+  max-width: 34em;
+  font-family: var(--font-display);
+  font-size: clamp(16px, 1.35vw, 21px);
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--text-bright);
+}
+.meta {
+  margin: 14px 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  /* 这一行是「时间码 + 中文镜头备注」混排，0.16em 的大写字距会把汉字撑散，
+     所以走 0.06em；数字用 tabular-nums 对齐 */
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-base);
+}
+
+.btn-row { margin: 14px 0 0; display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-start; pointer-events: auto; }
+/* 白药丸：参考图里唯一的 UI 控件，尺寸与主站 .pill 对齐 */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.7em;
+  background: var(--paper-hi); color: var(--ink);
+  border: 1px solid transparent;
+  border-radius: 999px; padding: 0.78em 1.6em;
+  font-family: var(--font-display);
+  font-size: var(--fs-body); font-weight: 600; line-height: 1; letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: translate 0.3s var(--ease-claude), background 0.3s var(--ease-claude);
+}
+.btn:hover { translate: 0 -2px; }
+/* ghost 是本站的让步：这一屏有两枚药丸，都实心白会互相吃掉主次 */
+.btn--ghost {
+  background: transparent; color: var(--text-bright);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.btn--ghost:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--text-bright); }
+
+/* 数据栏：一行读数（数值 + 标签同基线），头顶一道发丝线。
+   第三轮那排像素图标（⏐≈⬚）随点阵语言一起删除，装饰不留。 */
+/* 原本竖排两行（数值 40 + 标签 16 + 间距 5 = 61 高），首屏整块因此 413 高、
+   顶缘爬到 417（下巴在 500）。改成横排同基线后只剩 36 高 —— 这一栏本来就是
+   「一行小字」的 HUD 语言，横排更贴底部 HUD 的读数样式，不是单纯为了省地方。 */
+.metrics {
+  margin: 14px 0 0; padding: 12px 0 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px; width: min(760px, 100%);
+  border-top: 1px solid var(--line-soft);
+}
+.metrics > div { display: flex; flex-direction: row; align-items: baseline; gap: 8px; }
+.m-val {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.6vh, 32px); font-weight: 800;
+  line-height: 1; letter-spacing: -0.02em;
+  color: var(--text-bright);
+  font-variant-numeric: tabular-nums;
+}
+.m-key {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.04em;
+  /* .66 档撤掉垫子后只有约 3.5:1（11px 属正文档，线 4.5），提到 .88。
+     数值那一档 .m-val 本来就是纯白，两者靠字号/字重分层，不靠透明度。 */
+  color: var(--text-base);
+}
+
+/* ── 底部 HUD ─────────────────────────────────────────────── */
+.hud-bottom {
+  position: fixed; z-index: 30; left: 0; right: 0; bottom: 0;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 18px; padding: 0 24px 20px; pointer-events: none;
+}
+.cue {
+  justify-self: start;
+  font-family: var(--font-display);
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+  transition: opacity 0.4s ease;
+}
+.cue.is-gone { opacity: 0; }
+.bar {
+  justify-self: center;
+  width: min(360px, 46vw); height: 2px; background: var(--line);
+  border-radius: 2px; overflow: hidden;
+}
+.bar-fill {
+  display: block; height: 100%; width: 100%;
+  background: var(--accent);
+  transform: scaleX(0); transform-origin: 0 50%;
+}
+.readout {
+  justify-self: end;
+  font-family: var(--font-display);
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  /* 原来留 --text-dim 的理由是「它站在 --void-7 的黑底上」—— 那道黑底 2026-10-14 被我砍到
+     只剩贴着 HUD 的 14% 一条边，读数现在站在画面上：sc12@1470×706 量到 .66 档在 act3/outro
+     两帧只有 4.42 / 4.37:1（12px 正文档，线 4.5）。提到 .88 档，推算 6.1 / 6.0。 */
+  color: var(--text-base);
+}
+
+.track { position: relative; z-index: 1; height: calc(var(--screens) * 100vh); pointer-events: none; }
+
+.noscript {
+  position: fixed; inset: 0; display: grid; place-items: center; z-index: 50;
+  background: var(--void-7);
+  font-size: var(--fs-body); line-height: var(--lh-body); color: var(--text-base);
+}
+
+/* ── 响应式：PC 多栏在移动端自动堆叠 ─────────────────────── */
+@media (max-width: 1180px) {
+  .sub { font-size: 16px; }
+}
+
+@media (max-width: 900px) {
+  .hud-top { gap: 8px; }
+  .pill--nav { display: none; }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+  /* 窄屏没有左右余量可让（375 上脸占满整幅），只保留纵向避让：仍然锁下缘，横向回到居中。
+     栏宽收到 680 以内，发丝线不会横贯整屏。 */
+  .captions { place-items: end center; padding-inline: 40px; }
+  .caption { align-items: center; text-align: center; width: min(680px, 100%); }
+  .headline { align-items: center; }
+  .btn-row { justify-content: center; }
+  /* 数据栏仍是「数值+标签」同基线的横排，只是整组在格子里居中 */
+  .metrics > div { justify-content: center; }
+}
+
+@media (max-width: 640px) {
+  .captions { padding: 84px 18px 84px; }
+  /* 竖屏是 cover 裁切（16:9 的原片被拉成 375×812 的中央竖条），人物从头到脚占满整幅，
+     桌面那条「下三分之一没有脸」的余量在这里不存在：sc7@375×812 量到首屏下巴底缘 y=440，
+     而文字块顶缘 418 —— 首屏那两行必然压在脸下方。桌面的解法是让开，竖屏让不开。
+     ⚠️ 桌面这轮撤掉的暗垫，在这一档保留：sc12@375×812 量到没有垫子时首屏徽标那一行的真实背景
+     L=0.3244（正脸最亮处），纯白墨的严格下限只有 2.71:1，act1 那帧 2.91 —— 阴影补不回来，
+     它只跟着笔画走，撑不满一行 12px 字的整条背景。整块仍从 310 高压到 267，顶缘落到 461。
+
+    ✅ 2026-10-14 第五十一次用三图分离复证（sc13/sc14，同帧截 有字有垫 / 有字无垫 / 无字无垫）：
+    这一段在位（content:""、渐变 rgba(2,2,2,.78)→0、z-index:-1），桌面档是 content: none ——
+    第四十八次的意图实现正确。垫覆盖 56.5% 幅面、把亮度压到 61.3%。
+    字的真实对比度（有字无垫 vs 无字无垫）= 7.16:1；线上真实（有字有垫 vs 无字无垫）整块 6.27:1。
+    ⚠️ 所以这一档若再量出「某行 2~3:1」，先查是不是拿 p95 量到了抗锯齿边缘
+    （12px 小字一盒只有 300~400 个墨像素，p95 会掉进 alpha 0.15~0.35 那一档，inkL 低到 0.07~0.29）。
+    按 alpha 分箱后核心箱五段全部 5.11~5.98 —— 报数时必须同时给核心箱，见 .headline 处注释。 */
+  .caption::before {
+    content: '';
+    position: absolute; left: -8vw; right: -8vw; top: -26%; bottom: -14%;
+    background: linear-gradient(to top,
+      rgba(2, 2, 2, 0.78) 0%, rgba(2, 2, 2, 0.62) 40%, rgba(2, 2, 2, 0.32) 70%, rgba(2, 2, 2, 0) 100%);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .headline, .m-val { text-shadow: 0 0 20px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.7); }
+  .badge, .kicker, .sub, .meta, .m-key, .btn--ghost {
+    text-shadow: 0 0 9px rgba(0, 0, 0, 1), 0 1px 3px rgba(0, 0, 0, 0.85);
+  }
+  #cap-intro .headline { --hero-fs: clamp(26px, 7.6vw, 36px); margin-top: 8px; }
+  .headline--act { --hero-fs: clamp(24px, 6.8vw, 32px); margin-top: 8px; }
+  .sub { font-size: 14px; line-height: 1.5; margin-top: 12px; }
+  .meta { letter-spacing: 0.06em; }
+  .btn-row { margin-top: 10px; }
+  .metrics { margin-top: 10px; padding-top: 10px; }
+  .m-val { font-size: clamp(20px, 3.2vh, 26px); }
+  .readout { display: none; }
+  .bar { width: 40vw; }
+  .hud-bottom { grid-template-columns: auto 1fr; }
+}
+
+/* 矮窗口（例如把浏览器往下拽成 1470×700）：块里除了 vh 那几档还有徽标/副句/药丸这些
+   固定高度，视口一矮，固定部分占比就变大，整块相对变高、顶缘往上爬。
+   sc7@1470×700 量到首屏顶缘 352 而下巴在 380 —— 差 28px，徽标会蹭到下巴。
+   这里再收一档字号与间距（实测顶缘回到 386，让开 6px）。 */
+@media (max-height: 780px) and (min-width: 641px) {
+  #cap-intro .headline { --hero-fs: clamp(28px, 6.2vh, 84px); margin-top: 8px; }
+  .headline--act { --hero-fs: clamp(26px, 5.8vh, 78px); margin-top: 8px; }
+  .sub { margin-top: 8px; }
+  .btn-row { margin-top: 10px; }
+  .metrics { margin-top: 10px; padding-top: 8px; }
+  .m-val { font-size: clamp(22px, 3.2vh, 32px); }
+}
+
+@media (max-width: 420px) {
+  .btn-row { flex-direction: column; align-items: stretch; }
+}
+
+/* ── 无障碍：滚动驱动属于用户主动触发的动效，保留；
+      自动播放的循环与光标视差属于自主运动，撤掉。 ────────── */
+@media (prefers-reduced-motion: reduce) {
+  .layer, .caption, .film--parallax, .btn, .pill--cta { transition-duration: 0.01ms !important; }
+  .caption { transform: none; }
+  .cue { display: none; }
+}

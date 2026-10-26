@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+# 后台（Sanity Studio）不收录：需要登录才能用，且内容与前台重复
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin.html
+
+Sitemap: https://wjsbkd.github.io/sitemap.xml
